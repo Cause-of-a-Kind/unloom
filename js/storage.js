@@ -139,18 +139,56 @@ export async function saveRecording(blob, metadata) {
     });
 }
 
+// Get video duration from file
+async function getVideoDuration(file) {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+
+        const url = URL.createObjectURL(file);
+
+        const cleanup = () => {
+            URL.revokeObjectURL(url);
+        };
+
+        // Timeout after 3 seconds
+        const timeout = setTimeout(() => {
+            cleanup();
+            resolve(0);
+        }, 3000);
+
+        video.onloadedmetadata = () => {
+            clearTimeout(timeout);
+            const dur = video.duration;
+            // Handle Infinity, NaN, or invalid durations
+            const duration = (isFinite(dur) && !isNaN(dur) && dur > 0) ? Math.round(dur) : 0;
+            cleanup();
+            resolve(duration);
+        };
+
+        video.onerror = () => {
+            clearTimeout(timeout);
+            cleanup();
+            resolve(0);
+        };
+
+        video.src = url;
+    });
+}
+
 // Get all recordings (from folder + metadata)
 export async function getRecordings() {
     if (!directoryHandle) {
         return [];
     }
 
-    // Get files from directory
-    const files = [];
+    // Get files from directory with file info
+    const fileEntries = [];
     try {
         for await (const entry of directoryHandle.values()) {
             if (entry.kind === 'file' && entry.name.endsWith('.webm')) {
-                files.push(entry.name);
+                fileEntries.push(entry);
             }
         }
     } catch (err) {
@@ -174,17 +212,44 @@ export async function getRecordings() {
         };
     });
 
-    // Combine: prioritize files that exist in folder
-    const recordings = files.map(filename => {
-        const meta = metadataMap.get(filename);
-        return meta || {
+    // Build recordings list with file metadata fallback
+    const recordings = [];
+    for (const entry of fileEntries) {
+        const filename = entry.name;
+        const dbMeta = metadataMap.get(filename);
+
+        // Get actual file for size and timestamp
+        const file = await entry.getFile();
+
+        // Use DB metadata if available, otherwise extract from file
+        let duration = dbMeta?.duration || 0;
+        const size = file.size || dbMeta?.size || 0;
+        const timestamp = dbMeta?.timestamp || file.lastModified || 0;
+
+        // If no duration in DB, try to extract from video
+        if (!duration && file.size > 0) {
+            duration = await getVideoDuration(file);
+
+            // Save extracted metadata back to DB for next time
+            if (duration > 0) {
+                try {
+                    const transaction = db.transaction(RECORDINGS_STORE, 'readwrite');
+                    const store = transaction.objectStore(RECORDINGS_STORE);
+                    store.put({ filename, duration, timestamp, title: filename, size });
+                } catch (e) {
+                    // Ignore save errors
+                }
+            }
+        }
+
+        recordings.push({
             filename,
-            duration: 0,
-            timestamp: 0,
-            title: filename,
-            size: 0
-        };
-    });
+            duration,
+            timestamp,
+            title: dbMeta?.title || filename,
+            size
+        });
+    }
 
     // Sort by timestamp descending (newest first)
     recordings.sort((a, b) => b.timestamp - a.timestamp);

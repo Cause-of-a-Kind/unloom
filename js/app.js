@@ -8,6 +8,33 @@ import * as library from './library.js';
 let state = 'loading'; // loading, unsupported, no-folder, ready, recording
 let timerInterval = null;
 let cameraPreviewStream = null;
+let micPreviewStream = null;
+let audioContext = null;
+let audioAnalyser = null;
+let audioAnimationId = null;
+
+// Settings keys
+const SETTINGS_KEY = 'unloom-settings';
+
+// Load saved settings
+function loadSettings() {
+    try {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch {
+        return {};
+    }
+}
+
+// Save settings
+function saveSettings(settings) {
+    try {
+        const current = loadSettings();
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, ...settings }));
+    } catch {
+        // Ignore storage errors
+    }
+}
 
 // DOM elements
 const elements = {};
@@ -30,12 +57,13 @@ async function init() {
 
     // Device selection elements
     elements.micSelect = document.getElementById('mic-select');
+    elements.micToggle = document.getElementById('mic-toggle');
     elements.cameraToggle = document.getElementById('camera-toggle');
-    elements.cameraLabel = document.getElementById('camera-label');
-    elements.cameraOptions = document.getElementById('camera-options');
     elements.cameraSelect = document.getElementById('camera-select');
     elements.cameraPreviewContainer = document.getElementById('camera-preview-container');
     elements.cameraPreview = document.getElementById('camera-preview');
+    elements.audioPreviewContainer = document.getElementById('audio-preview-container');
+    elements.audioLevel = document.getElementById('audio-level');
 
     // Check browser support
     if (!storage.isSupported() || !recorder.isSupported()) {
@@ -75,6 +103,8 @@ function setupEventListeners() {
     elements.stopRecordingBtn?.addEventListener('click', handleStopRecording);
 
     // Device selection listeners
+    elements.micToggle?.addEventListener('change', handleMicToggle);
+    elements.micSelect?.addEventListener('change', handleMicChange);
     elements.cameraToggle?.addEventListener('change', handleCameraToggle);
     elements.cameraSelect?.addEventListener('change', handleCameraChange);
 }
@@ -82,10 +112,11 @@ function setupEventListeners() {
 // Populate device dropdowns
 async function populateDevices() {
     const { microphones, cameras } = await recorder.getDevices();
+    const settings = loadSettings();
 
     // Populate microphone dropdown
     if (elements.micSelect) {
-        elements.micSelect.innerHTML = '<option value="">No microphone</option>';
+        elements.micSelect.innerHTML = '<option value="">Select microphone</option>';
         for (const mic of microphones) {
             const option = document.createElement('option');
             option.value = mic.deviceId;
@@ -93,8 +124,10 @@ async function populateDevices() {
             elements.micSelect.appendChild(option);
         }
 
-        // Select first mic by default if available
-        if (microphones.length > 0) {
+        // Restore saved mic or select first
+        if (settings.micDeviceId && microphones.some(m => m.deviceId === settings.micDeviceId)) {
+            elements.micSelect.value = settings.micDeviceId;
+        } else if (microphones.length > 0) {
             elements.micSelect.value = microphones[0].deviceId;
         }
     }
@@ -109,30 +142,67 @@ async function populateDevices() {
             elements.cameraSelect.appendChild(option);
         }
 
-        // Select first camera by default if available
-        if (cameras.length > 0) {
+        // Restore saved camera or select first
+        if (settings.cameraDeviceId && cameras.some(c => c.deviceId === settings.cameraDeviceId)) {
+            elements.cameraSelect.value = settings.cameraDeviceId;
+        } else if (cameras.length > 0) {
             elements.cameraSelect.value = cameras[0].deviceId;
         }
+    }
+
+    // Restore toggle states (default to true if not saved)
+    if (elements.micToggle) {
+        elements.micToggle.checked = settings.micEnabled !== false;
+    }
+    if (elements.cameraToggle) {
+        elements.cameraToggle.checked = settings.cameraEnabled !== false;
+    }
+
+    // Start previews if toggles are checked
+    if (elements.micToggle?.checked && elements.micSelect?.value) {
+        await startMicPreview();
+    }
+    if (elements.cameraToggle?.checked && elements.cameraSelect?.value) {
+        await startCameraPreview();
+    }
+}
+
+// Handle microphone toggle
+async function handleMicToggle() {
+    const enabled = elements.micToggle.checked;
+    saveSettings({ micEnabled: enabled });
+
+    if (enabled) {
+        await startMicPreview();
+    } else {
+        stopMicPreview();
+    }
+}
+
+// Handle microphone selection change
+async function handleMicChange() {
+    saveSettings({ micDeviceId: elements.micSelect?.value });
+    if (elements.micToggle?.checked) {
+        await startMicPreview();
     }
 }
 
 // Handle camera toggle
 async function handleCameraToggle() {
     const enabled = elements.cameraToggle.checked;
-    elements.cameraLabel.textContent = enabled ? 'On' : 'Off';
+    saveSettings({ cameraEnabled: enabled });
 
     if (enabled) {
-        elements.cameraOptions?.classList.remove('hidden');
         await startCameraPreview();
     } else {
-        elements.cameraOptions?.classList.add('hidden');
         stopCameraPreview();
     }
 }
 
 // Handle camera selection change
 async function handleCameraChange() {
-    if (elements.cameraToggle.checked) {
+    saveSettings({ cameraDeviceId: elements.cameraSelect?.value });
+    if (elements.cameraToggle?.checked) {
         await startCameraPreview();
     }
 }
@@ -161,6 +231,90 @@ function stopCameraPreview() {
         elements.cameraPreview.srcObject = null;
     }
     elements.cameraPreviewContainer?.classList.add('hidden');
+}
+
+// Start microphone preview with audio level meter
+async function startMicPreview() {
+    stopMicPreview(); // Stop any existing preview
+
+    const deviceId = elements.micSelect?.value;
+    if (!deviceId) return;
+
+    try {
+        micPreviewStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                deviceId: { exact: deviceId },
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
+
+        // Create audio context and analyser for level meter
+        audioContext = new AudioContext();
+        audioAnalyser = audioContext.createAnalyser();
+        audioAnalyser.fftSize = 256;
+
+        const source = audioContext.createMediaStreamSource(micPreviewStream);
+        source.connect(audioAnalyser);
+
+        // Show the preview container
+        elements.audioPreviewContainer?.classList.remove('hidden');
+
+        // Start the level meter animation
+        updateAudioLevel();
+    } catch (err) {
+        console.error('Mic preview error:', err);
+    }
+}
+
+// Stop microphone preview
+function stopMicPreview() {
+    if (audioAnimationId) {
+        cancelAnimationFrame(audioAnimationId);
+        audioAnimationId = null;
+    }
+
+    if (micPreviewStream) {
+        micPreviewStream.getTracks().forEach(track => track.stop());
+        micPreviewStream = null;
+    }
+
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+        audioAnalyser = null;
+    }
+
+    if (elements.audioLevel) {
+        elements.audioLevel.style.height = '0%';
+    }
+    elements.audioPreviewContainer?.classList.add('hidden');
+}
+
+// Update the audio level meter
+function updateAudioLevel() {
+    if (!audioAnalyser) return;
+
+    const dataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
+    audioAnalyser.getByteTimeDomainData(dataArray);
+
+    // Calculate RMS (root mean square) for better sensitivity
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        const sample = (dataArray[i] - 128) / 128; // Normalize to -1 to 1
+        sum += sample * sample;
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+
+    // Scale up for better visibility (multiply by 3 for more sensitivity)
+    const level = Math.min(100, rms * 300);
+
+    if (elements.audioLevel) {
+        elements.audioLevel.style.height = `${level}%`;
+    }
+
+    audioAnimationId = requestAnimationFrame(updateAudioLevel);
 }
 
 // Update UI based on state
@@ -225,11 +379,13 @@ async function handleStartRecording() {
     try {
         elements.startRecordingBtn.disabled = true;
 
-        // Stop camera preview before recording (we'll use it in the recording)
+        // Stop previews before recording (we'll use them in the recording)
+        stopMicPreview();
         stopCameraPreview();
 
-        // Get selected devices
-        const micDeviceId = elements.micSelect?.value || null;
+        // Get selected devices (only use mic if toggle is enabled)
+        const micEnabled = elements.micToggle?.checked || false;
+        const micDeviceId = micEnabled ? (elements.micSelect?.value || null) : null;
         const cameraEnabled = elements.cameraToggle?.checked || false;
         const cameraDeviceId = elements.cameraSelect?.value || null;
 
@@ -275,7 +431,10 @@ async function handleStopRecording() {
         setState('ready');
         await refreshLibrary();
 
-        // Restart camera preview if it was enabled
+        // Restart previews if they were enabled
+        if (elements.micToggle?.checked) {
+            await startMicPreview();
+        }
         if (elements.cameraToggle?.checked) {
             await startCameraPreview();
         }
@@ -319,6 +478,23 @@ async function refreshLibrary() {
         handlePlayRecording,
         handleDeleteRecording
     );
+
+    // Generate thumbnails for each recording
+    const cards = elements.libraryContainer.querySelectorAll('.recording-card');
+    for (const card of cards) {
+        const filename = card.dataset.filename;
+        if (filename) {
+            try {
+                const blob = await storage.getRecordingBlob(filename);
+                const thumbnail = await library.generateThumbnail(blob);
+                if (thumbnail) {
+                    library.setCardThumbnail(card, thumbnail);
+                }
+            } catch (err) {
+                // Silently ignore thumbnail generation errors
+            }
+        }
+    }
 }
 
 // Handle playing a recording

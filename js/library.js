@@ -6,7 +6,7 @@ let currentObjectUrl = null;
 
 // Format duration as MM:SS
 export function formatDuration(seconds) {
-    if (!seconds || seconds < 0) return '0:00';
+    if (!seconds || seconds < 0 || !isFinite(seconds) || isNaN(seconds)) return '0:00';
 
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -53,6 +53,66 @@ export function formatSize(bytes) {
     return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
+// Generate a thumbnail from a video blob
+export function generateThumbnail(blob) {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(blob);
+        let resolved = false;
+
+        const cleanup = () => {
+            if (!resolved) {
+                resolved = true;
+                URL.revokeObjectURL(url);
+            }
+        };
+
+        // Timeout after 5 seconds
+        const timeout = setTimeout(() => {
+            cleanup();
+            resolve(null);
+        }, 5000);
+
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+
+        video.onloadedmetadata = () => {
+            // Seek to 1 second or 10% into the video
+            video.currentTime = Math.min(1, video.duration * 0.1 || 0.1);
+        };
+
+        video.onseeked = () => {
+            if (resolved) return;
+            clearTimeout(timeout);
+
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 320;
+                canvas.height = video.videoHeight || 180;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                cleanup();
+                resolve(dataUrl);
+            } catch (err) {
+                cleanup();
+                resolve(null);
+            }
+        };
+
+        video.onerror = () => {
+            clearTimeout(timeout);
+            cleanup();
+            resolve(null);
+        };
+
+        video.src = url;
+    });
+}
+
 // Create a recording card element
 export function createRecordingCard(recording, onPlay, onDelete) {
     const card = document.createElement('div');
@@ -61,9 +121,12 @@ export function createRecordingCard(recording, onPlay, onDelete) {
 
     card.innerHTML = `
         <div class="recording-thumbnail">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
-            </svg>
+            <img class="thumbnail-img" src="" alt="" style="display: none;">
+            <div class="play-overlay">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </div>
         </div>
         <div class="recording-info">
             <div class="recording-title" title="${recording.filename}">${recording.title || recording.filename}</div>
@@ -94,6 +157,16 @@ export function createRecordingCard(recording, onPlay, onDelete) {
     });
 
     return card;
+}
+
+// Set thumbnail on a card
+export function setCardThumbnail(card, dataUrl) {
+    const img = card.querySelector('.thumbnail-img');
+
+    if (img && dataUrl) {
+        img.src = dataUrl;
+        img.style.display = 'block';
+    }
 }
 
 // Render the library grid

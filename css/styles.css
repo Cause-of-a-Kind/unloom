@@ -103,6 +103,28 @@ body {
     color: var(--color-primary-hover);
 }
 
+/* GitHub Link */
+.github-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius);
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.github-link:hover {
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.github-link svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* Main Content */
 .main {
     flex: 1;
@@ -216,13 +238,12 @@ body {
 /* Recording Options */
 .recording-options {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
     padding: 1rem;
     background: var(--color-surface);
     border-radius: var(--radius-lg);
-    max-width: 600px;
+    max-width: 400px;
     margin: 0 auto;
 }
 
@@ -260,6 +281,20 @@ body {
 .option-select:focus {
     outline: none;
     border-color: var(--color-primary);
+}
+
+/* Input Row - Select + Toggle */
+.input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.input-row .option-select {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Toggle Switch */
@@ -309,11 +344,55 @@ body {
     min-width: 24px;
 }
 
+/* Previews Container */
+.previews-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    flex-wrap: wrap;
+}
+
+/* Audio Preview */
+.audio-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.audio-meter {
+    width: 60px;
+    height: 150px;
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 4px;
+}
+
+.audio-level {
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to top, var(--color-primary), #22c55e);
+    border-radius: var(--radius);
+    transition: height 0.05s ease-out;
+}
+
+.audio-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
 /* Camera Preview */
 .camera-preview-container {
     display: flex;
-    justify-content: center;
-    padding: 1rem 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .camera-preview {
@@ -430,12 +509,37 @@ body {
     align-items: center;
     justify-content: center;
     color: var(--color-text-secondary);
+    position: relative;
+    overflow: hidden;
 }
 
-.recording-thumbnail svg {
+.recording-thumbnail .thumbnail-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.recording-card:hover .play-overlay {
+    opacity: 1;
+}
+
+.play-overlay svg {
     width: 48px;
     height: 48px;
-    opacity: 0.5;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .recording-info {
