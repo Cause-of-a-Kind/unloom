@@ -41,58 +41,64 @@ const elements = {};
 
 // Initialize the app
 async function init() {
-    // Cache DOM elements
-    elements.unsupportedBanner = document.getElementById('unsupported-banner');
-    elements.folderSection = document.getElementById('folder-section');
-    elements.folderName = document.getElementById('folder-name');
-    elements.changeFolderBtn = document.getElementById('change-folder-btn');
-    elements.noFolderSection = document.getElementById('no-folder-section');
-    elements.selectFolderBtn = document.getElementById('select-folder-btn');
-    elements.readySection = document.getElementById('ready-section');
-    elements.startRecordingBtn = document.getElementById('start-recording-btn');
-    elements.recordingSection = document.getElementById('recording-section');
-    elements.stopRecordingBtn = document.getElementById('stop-recording-btn');
-    elements.recordingTimer = document.getElementById('recording-timer');
-    elements.libraryContainer = document.getElementById('library-container');
+    try {
+        // Cache DOM elements
+        elements.unsupportedBanner = document.getElementById('unsupported-banner');
+        elements.folderSection = document.getElementById('folder-section');
+        elements.folderName = document.getElementById('folder-name');
+        elements.changeFolderBtn = document.getElementById('change-folder-btn');
+        elements.noFolderSection = document.getElementById('no-folder-section');
+        elements.selectFolderBtn = document.getElementById('select-folder-btn');
+        elements.readySection = document.getElementById('ready-section');
+        elements.startRecordingBtn = document.getElementById('start-recording-btn');
+        elements.recordingSection = document.getElementById('recording-section');
+        elements.stopRecordingBtn = document.getElementById('stop-recording-btn');
+        elements.recordingTimer = document.getElementById('recording-timer');
+        elements.libraryContainer = document.getElementById('library-container');
 
-    // Device selection elements
-    elements.micSelect = document.getElementById('mic-select');
-    elements.micToggle = document.getElementById('mic-toggle');
-    elements.cameraToggle = document.getElementById('camera-toggle');
-    elements.cameraSelect = document.getElementById('camera-select');
-    elements.cameraPreviewContainer = document.getElementById('camera-preview-container');
-    elements.cameraPreview = document.getElementById('camera-preview');
-    elements.audioPreviewContainer = document.getElementById('audio-preview-container');
-    elements.audioLevel = document.getElementById('audio-level');
+        // Device selection elements
+        elements.micSelect = document.getElementById('mic-select');
+        elements.micToggle = document.getElementById('mic-toggle');
+        elements.cameraToggle = document.getElementById('camera-toggle');
+        elements.cameraSelect = document.getElementById('camera-select');
+        elements.cameraPreviewContainer = document.getElementById('camera-preview-container');
+        elements.cameraPreview = document.getElementById('camera-preview');
+        elements.audioPreviewContainer = document.getElementById('audio-preview-container');
+        elements.audioLevel = document.getElementById('audio-level');
 
-    // Check browser support
-    if (!storage.isSupported() || !recorder.isSupported()) {
-        setState('unsupported');
-        return;
-    }
-
-    // Initialize storage
-    await storage.initStorage();
-
-    // Initialize player
-    library.initPlayer();
-
-    // Setup event listeners
-    setupEventListeners();
-
-    // Try to restore directory handle
-    const handle = await storage.getDirectoryHandle();
-    if (handle) {
-        const hasPermission = await storage.verifyPermission(handle);
-        if (hasPermission) {
-            setState('ready');
-            await refreshLibrary();
-            await populateDevices();
+        // Check browser support
+        if (!storage.isSupported() || !recorder.isSupported()) {
+            setState('unsupported');
             return;
         }
-    }
 
-    setState('no-folder');
+        // Initialize storage
+        await storage.initStorage();
+
+        // Initialize player
+        library.initPlayer();
+
+        // Setup event listeners
+        setupEventListeners();
+
+        // Try to restore directory handle
+        const handle = await storage.getDirectoryHandle();
+        if (handle) {
+            const hasPermission = await storage.verifyPermission(handle);
+            if (hasPermission) {
+                setState('ready');
+                await refreshLibrary();
+                await populateDevices();
+                return;
+            }
+        }
+
+        setState('no-folder');
+    } catch (err) {
+        console.error('Init error:', err);
+        // Fallback to no-folder state so user sees something
+        setState('no-folder');
+    }
 }
 
 // Setup event listeners

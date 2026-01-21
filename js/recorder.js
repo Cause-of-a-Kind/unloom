@@ -10,8 +10,12 @@ let cameraStream = null;
 let audioContext = null;
 let startTime = null;
 
-// Initialize compositor
-compositor.init();
+// Initialize compositor (wrapped in try-catch to prevent module load failure)
+try {
+    compositor.init();
+} catch (e) {
+    console.error('Compositor init error:', e);
+}
 
 // Get supported MIME type
 function getSupportedMimeType() {

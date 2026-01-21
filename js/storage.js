@@ -88,22 +88,29 @@ export async function requestFolderAccess() {
     }
 }
 
-// Verify/request permission on existing handle
-export async function verifyPermission(handle) {
+// Check if we have permission on existing handle (does NOT request permission)
+export async function verifyPermission(handle, requestIfNeeded = false) {
     if (!handle) return false;
 
-    // Check current permission state
-    const options = { mode: 'readwrite' };
-    if (await handle.queryPermission(options) === 'granted') {
-        return true;
-    }
+    try {
+        const options = { mode: 'readwrite' };
+        const permission = await handle.queryPermission(options);
 
-    // Request permission
-    if (await handle.requestPermission(options) === 'granted') {
-        return true;
-    }
+        if (permission === 'granted') {
+            return true;
+        }
 
-    return false;
+        // Only request permission if explicitly asked (requires user gesture)
+        if (requestIfNeeded && permission === 'prompt') {
+            const result = await handle.requestPermission(options);
+            return result === 'granted';
+        }
+
+        return false;
+    } catch (err) {
+        console.error('Permission check error:', err);
+        return false;
+    }
 }
 
 // Save recording to folder and metadata to IndexedDB
