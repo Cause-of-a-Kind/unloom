@@ -1,0 +1,564 @@
+/* CSS Variables */
+:root {
+    --color-bg: #0f0f0f;
+    --color-surface: #1a1a1a;
+    --color-surface-hover: #252525;
+    --color-border: #333;
+    --color-text: #fff;
+    --color-text-secondary: #999;
+    --color-primary: #4f46e5;
+    --color-primary-hover: #6366f1;
+    --color-danger: #dc2626;
+    --color-danger-hover: #ef4444;
+    --color-recording: #ef4444;
+    --radius: 8px;
+    --radius-lg: 12px;
+}
+
+/* Reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Base */
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* Utility */
+.hidden {
+    display: none !important;
+}
+
+/* Layout */
+.app {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo svg {
+    width: 24px;
+    height: 24px;
+    color: var(--color-primary);
+}
+
+/* Folder Section */
+.folder-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.folder-section svg {
+    width: 16px;
+    height: 16px;
+}
+
+.folder-name {
+    color: var(--color-text);
+}
+
+.change-folder-btn {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+}
+
+.change-folder-btn:hover {
+    background: var(--color-surface);
+    color: var(--color-primary-hover);
+}
+
+/* Main Content */
+.main {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Unsupported Banner */
+.unsupported-banner {
+    background: var(--color-danger);
+    color: white;
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+.unsupported-banner h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.unsupported-banner p {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* No Folder Section */
+.no-folder-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    gap: 1.5rem;
+}
+
+.no-folder-section svg {
+    width: 64px;
+    height: 64px;
+    color: var(--color-text-secondary);
+}
+
+.no-folder-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.no-folder-section p {
+    color: var(--color-text-secondary);
+    max-width: 400px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+    border-radius: var(--radius-lg);
+}
+
+.btn-lg svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Ready Section */
+.ready-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Recording Options */
+.recording-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 180px;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.option-label svg {
+    width: 16px;
+    height: 16px;
+}
+
+.option-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    cursor: pointer;
+    min-width: 180px;
+}
+
+.option-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Toggle Switch */
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.toggle input {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--color-border);
+    border-radius: 12px;
+    transition: background-color 0.2s;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.toggle input:checked + .toggle-slider {
+    background: var(--color-primary);
+}
+
+.toggle input:checked + .toggle-slider::after {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    min-width: 24px;
+}
+
+/* Camera Preview */
+.camera-preview-container {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.camera-preview {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+}
+
+.record-controls {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+/* Recording Section */
+.recording-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 3rem 0;
+}
+
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.recording-dot {
+    width: 16px;
+    height: 16px;
+    background: var(--color-recording);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.btn-stop {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-stop:hover:not(:disabled) {
+    background: var(--color-danger-hover);
+}
+
+/* Library */
+.library-section h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--color-text-secondary);
+}
+
+.library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.library-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.library-empty svg {
+    opacity: 0.5;
+    margin-bottom: 0.5rem;
+}
+
+.library-empty-hint {
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
+
+/* Recording Card */
+.recording-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.recording-card:hover {
+    background: var(--color-surface-hover);
+    transform: translateY(-2px);
+}
+
+.recording-thumbnail {
+    aspect-ratio: 16 / 9;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+}
+
+.recording-thumbnail svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+}
+
+.recording-info {
+    padding: 0.75rem 1rem;
+}
+
+.recording-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+.recording-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.recording-delete {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background-color 0.15s;
+}
+
+.recording-card:hover .recording-delete {
+    opacity: 1;
+}
+
+.recording-delete:hover {
+    background: var(--color-danger);
+}
+
+.recording-delete svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Player Modal */
+.player-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.player-modal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.player-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.player-video {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: var(--radius-lg);
+    background: black;
+}
+
+.player-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s;
+}
+
+.player-close:hover {
+    background: var(--color-surface-hover);
+}
+
+.player-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .folder-section {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .library-grid {
+        grid-template-columns: 1fr;
+    }
+}
