@@ -421,17 +421,18 @@ async function handleStopRecording() {
         elements.stopRecordingBtn.disabled = true;
         stopTimer();
 
-        const { blob, duration } = await recorder.stopRecording();
+        const { blob, mp4Blob, duration } = await recorder.stopRecording();
 
         // Generate filename
         const timestamp = Date.now();
         const filename = `recording-${timestamp}.webm`;
 
-        // Save to folder
+        // Save to folder (both .webm and .mp4 if available)
         await storage.saveRecording(blob, {
             filename,
             duration,
-            timestamp
+            timestamp,
+            mp4Blob
         });
 
         setState('ready');

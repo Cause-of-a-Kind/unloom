@@ -121,11 +121,24 @@ export async function saveRecording(blob, metadata) {
 
     const filename = metadata.filename || `recording-${Date.now()}.webm`;
 
-    // Write file to folder
+    // Write WebM file to folder
     const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(blob);
     await writable.close();
+
+    // Write MP4 companion file if provided
+    if (metadata.mp4Blob) {
+        const mp4Filename = filename.replace(/\.webm$/, '.mp4');
+        try {
+            const mp4FileHandle = await directoryHandle.getFileHandle(mp4Filename, { create: true });
+            const mp4Writable = await mp4FileHandle.createWritable();
+            await mp4Writable.write(metadata.mp4Blob);
+            await mp4Writable.close();
+        } catch (err) {
+            console.error('Failed to save MP4 companion file:', err);
+        }
+    }
 
     // Store metadata in IndexedDB
     const recordingData = {
@@ -270,11 +283,19 @@ export async function deleteRecording(filename) {
         throw new Error('No directory selected');
     }
 
-    // Remove file from folder
+    // Remove WebM file from folder
     try {
         await directoryHandle.removeEntry(filename);
     } catch (err) {
         console.error('Error removing file:', err);
+    }
+
+    // Remove MP4 companion file if it exists
+    const mp4Filename = filename.replace(/\.webm$/, '.mp4');
+    try {
+        await directoryHandle.removeEntry(mp4Filename);
+    } catch {
+        // MP4 companion may not exist, ignore
     }
 
     // Remove metadata from IndexedDB
